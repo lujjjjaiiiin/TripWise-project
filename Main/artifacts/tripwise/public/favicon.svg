@@ -1,0 +1,14 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="32" height="32" rx="7" fill="#0B1F4B"/>
+  <!-- Airplane: top-down silhouette, tilted 45° (takeoff northeast) -->
+  <g transform="translate(16,16) rotate(-45) translate(-16,-16)">
+    <!-- Fuselage -->
+    <ellipse cx="16" cy="16" rx="2.2" ry="9" fill="white"/>
+    <!-- Main wings -->
+    <ellipse cx="16" cy="15" rx="10" ry="2.4" fill="white"/>
+    <!-- Nose cone -->
+    <ellipse cx="16" cy="7.5" rx="2.2" ry="2.5" fill="white"/>
+    <!-- Tail fins -->
+    <ellipse cx="16" cy="23.5" rx="5.5" ry="1.6" fill="white"/>
+  </g>
+</svg>
