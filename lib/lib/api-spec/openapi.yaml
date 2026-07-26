@@ -1,0 +1,345 @@
+openapi: 3.1.0
+info:
+  # Do not change the title — it controls generated filenames
+  title: Api
+  version: 0.1.0
+  description: TripWise AI — Travel destination recommendation API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: recommend
+    description: Travel recommendations
+  - name: catalogue
+    description: Destination catalogue
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status and model info
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /cities:
+    get:
+      operationId: getCities
+      tags: [catalogue]
+      summary: Get all destination cities
+      description: Returns all cities available in the travel catalogue
+      parameters:
+        - name: region
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: budget
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of cities
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CitiesResponse"
+
+  /recommend:
+    post:
+      operationId: postRecommend
+      tags: [recommend]
+      summary: Get personalized travel recommendations
+      description: >
+        Accepts traveller preferences and returns top destination recommendations
+        ranked by cosine similarity using K-Means clustered ML pipeline.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PreferenceInput"
+      responses:
+        "200":
+          description: Top recommendations ranked by match score
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecommendationResponse"
+        "422":
+          description: Validation error
+
+  /clusters:
+    get:
+      operationId: getClusters
+      tags: [catalogue]
+      summary: Get destination cluster information
+      description: Returns K-Means cluster breakdown with evaluation metrics
+      responses:
+        "200":
+          description: Cluster info and evaluation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClustersResponse"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      required: [status, destinations_loaded, n_clusters, silhouette_score]
+      properties:
+        status:
+          type: string
+        destinations_loaded:
+          type: integer
+        n_clusters:
+          type: integer
+        silhouette_score:
+          type: number
+
+    PreferenceInput:
+      type: object
+      properties:
+        culture:
+          type: number
+          minimum: 1
+          maximum: 5
+          default: 3
+        adventure:
+          type: number
+          minimum: 1
+          maximum: 5
+          default: 3
+        nature:
+          type: number
+          minimum: 1
+          maximum: 5
+          default: 3
+        beaches:
+          type: number
+          minimum: 1
+          maximum: 5
+          default: 3
+        nightlife:
+          type: number
+          minimum: 1
+          maximum: 5
+          default: 3
+        cuisine:
+          type: number
+          minimum: 1
+          maximum: 5
+          default: 3
+        wellness:
+          type: number
+          minimum: 1
+          maximum: 5
+          default: 3
+        urban:
+          type: number
+          minimum: 1
+          maximum: 5
+          default: 3
+        seclusion:
+          type: number
+          minimum: 1
+          maximum: 5
+          default: 3
+        has_airport:
+          type: integer
+          default: 1
+        is_short_trip:
+          type: integer
+          default: 0
+        is_one_week:
+          type: integer
+          default: 1
+        temp_avg_yearly:
+          type: number
+          default: 22
+        budget_level_encoded:
+          type: integer
+          default: 2
+        HotelRating_encoded:
+          type: number
+          default: 4
+        rating_was_unknown:
+          type: integer
+          default: 0
+        region_africa:
+          type: integer
+          default: 0
+        region_asia:
+          type: integer
+          default: 0
+        region_europe:
+          type: integer
+          default: 0
+        region_middle_east:
+          type: integer
+          default: 0
+        region_north_america:
+          type: integer
+          default: 0
+        region_oceania:
+          type: integer
+          default: 0
+        region_south_america:
+          type: integer
+          default: 0
+        top_n:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 10
+
+    TopFeature:
+      type: object
+      required: [feature, label, city_score, user_score]
+      properties:
+        feature:
+          type: string
+        label:
+          type: string
+        city_score:
+          type: number
+        user_score:
+          type: number
+
+    CityRecommendation:
+      type: object
+      required:
+        [city, country, similarity_score, match_percent, budget_level,
+         budget_label, temp_avg_yearly, cluster_profile, explanation, top_features]
+      properties:
+        city:
+          type: string
+        country:
+          type: string
+        similarity_score:
+          type: number
+        match_percent:
+          type: number
+        budget_level:
+          type: integer
+        budget_label:
+          type: string
+        temp_avg_yearly:
+          type: number
+        cluster_profile:
+          type: string
+        explanation:
+          type: string
+        iata:
+          type: ["string", "null"]
+        airport_name:
+          type: ["string", "null"]
+        hotel_name:
+          type: ["string", "null"]
+        attractions:
+          type: ["string", "null"]
+        latitude:
+          type: ["number", "null"]
+        longitude:
+          type: ["number", "null"]
+        top_features:
+          type: array
+          items:
+            $ref: "#/components/schemas/TopFeature"
+
+    RecommendationResponse:
+      type: object
+      required: [count, recommendations, metrics]
+      properties:
+        count:
+          type: integer
+        recommendations:
+          type: array
+          items:
+            $ref: "#/components/schemas/CityRecommendation"
+        metrics:
+          type: object
+          additionalProperties: true
+
+    CityInfo:
+      type: object
+      required: [city, country, budget_level, budget_label, temp_avg_yearly, cluster_profile]
+      properties:
+        city:
+          type: string
+        country:
+          type: string
+        budget_level:
+          type: integer
+        budget_label:
+          type: string
+        temp_avg_yearly:
+          type: number
+        cluster_profile:
+          type: string
+        iata:
+          type: ["string", "null"]
+        latitude:
+          type: ["number", "null"]
+        longitude:
+          type: ["number", "null"]
+
+    CitiesResponse:
+      type: object
+      required: [count, cities]
+      properties:
+        count:
+          type: integer
+        cities:
+          type: array
+          items:
+            $ref: "#/components/schemas/CityInfo"
+
+    EvaluationMetrics:
+      type: object
+      properties:
+        silhouette_score:
+          type: number
+        precision_at_10:
+          type: number
+        intra_list_diversity:
+          type: number
+
+    ClusterInfo:
+      type: object
+      required: [id, size, top_tastes, cities]
+      properties:
+        id:
+          type: integer
+        size:
+          type: integer
+        top_tastes:
+          type: array
+          items:
+            type: string
+        cities:
+          type: array
+          items:
+            type: string
+
+    ClustersResponse:
+      type: object
+      required: [count, clusters]
+      properties:
+        count:
+          type: integer
+        clusters:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClusterInfo"
